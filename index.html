@@ -36,7 +36,6 @@
     .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; z-index: 10; padding: 120px 24px 80px; text-align: center; }
     .hero-content { max-width: 900px; }
     .hero-badge { display: inline-flex; align-items: center; gap: 8px; padding: 8px 20px; background: var(--glass); border: 1px solid var(--border); border-radius: 50px; font-size: 14px; color: var(--text-dim); margin-bottom: 32px; backdrop-filter: blur(10px); }
-    @keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
     .avatar-wrap { width: 160px; height: 160px; margin: 0 auto 32px; position: relative; }
     .avatar-ring { position: absolute; inset: -8px; border-radius: 50%; background: conic-gradient(from 0deg, var(--primary), var(--accent), var(--cyan), var(--primary)); animation: spin 8s linear infinite; filter: blur(2px); }
     @keyframes spin { to { transform: rotate(360deg); } }
@@ -58,8 +57,7 @@
     .btn-ghost:hover { background: rgba(255,255,255,0.1); transform: translateY(-3px); border-color: var(--primary); }
     .scroll-indicator { position: absolute; bottom: 32px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; gap: 8px; color: var(--text-dim); font-size: 12px; animation: bounce 2s infinite; }
     @keyframes bounce { 0%,100% { transform: translate(-50%,0); } 50% { transform: translate(-50%,10px); } }
-    .scroll-indicator svg { animation: bounce 2s infinite; }
-    section { position: relative; z-index: 10; padding: 100px 24px; }
+    section { position: relative; z-index: 10; padding: 100px 24px; scroll-margin-top: 90px; }
     .container { max-width: 1200px; margin: 0 auto; }
     .section-header { text-align: center; margin-bottom: 64px; }
     .section-tag { display: inline-block; padding: 6px 18px; background: rgba(255,107,107,0.12); border: 1px solid rgba(255,107,107,0.3); border-radius: 50px; font-size: 13px; font-weight: 600; color: var(--primary); margin-bottom: 16px; letter-spacing: 2px; }
@@ -182,7 +180,7 @@
         <li><a href="#tutorials">B站教程</a></li>
         <li><a href="#contact">联系</a></li>
       </ul>
-      <button class="nav-toggle" id="navToggle" aria-label="菜单">
+      <button class="nav-toggle" id="navToggle" aria-label="菜单" aria-controls="navLinks" aria-expanded="false">
         <span></span><span></span><span></span>
       </button>
     </div>
@@ -207,7 +205,7 @@
       </p>
       <div class="hero-btns">
         <a href="#projects" class="btn btn-primary">⭐ 探索开源项目</a>
-        <a href="https://space.bilibili.com/" target="_blank" rel="noopener" class="btn btn-ghost">📺 B站看教程</a>
+        <a href="https://space.bilibili.com/106439263" target="_blank" rel="noopener" class="btn btn-ghost">📺 B站看教程</a>
       </div>
     </div>
     <div class="scroll-indicator">
@@ -487,11 +485,11 @@
           <p>枫云AI助手系列开源仓库</p>
           <span class="link">github.com/MewCo-AI</span>
         </a>
-        <a href="https://space.bilibili.com/" target="_blank" rel="noopener" class="contact-card reveal reveal-delay-2">
+        <a href="https://space.bilibili.com/106439263" target="_blank" rel="noopener" class="contact-card reveal reveal-delay-2">
           <div class="contact-icon"><img src="https://i0.hdslb.com/bfs/static/jinkela/long/images/wxwork-share.png" alt="B站官方账号"></div>
           <h4>B站官方账号</h4>
           <p>枫影剑Maple · 坚持为爱发电</p>
-          <span class="link">software &amp; tutorials only on Bilibili</span>
+          <span class="link">space.bilibili.com/106439263</span>
         </a>
         <a href="mailto:mewcoai@foxmail.com" class="contact-card reveal reveal-delay-3">
           <div class="contact-icon">✉️</div>
@@ -510,31 +508,35 @@
     const navbar = document.getElementById('navbar');
     const navLinks = document.getElementById('navLinks');
     const navToggle = document.getElementById('navToggle');
-    window.addEventListener('scroll', () => {
-      navbar.classList.toggle('scrolled', window.scrollY > 50);
-    });
-    navToggle.addEventListener('click', () => {
-      navLinks.classList.toggle('open');
-    });
-    document.querySelectorAll('a[href^="#"]').forEach(link => {
-      link.addEventListener('click', e => {
-        const target = document.querySelector(link.getAttribute('href'));
-        if (target) {
-          e.preventDefault();
-          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          navLinks.classList.remove('open');
-        }
-      });
-    });
     const sections = document.querySelectorAll('section[id]');
     const navAnchors = document.querySelectorAll('.nav-links a');
-    window.addEventListener('scroll', () => {
+    function updateNav() {
+      navbar.classList.toggle('scrolled', window.scrollY > 50);
       let current = '';
       sections.forEach(section => {
         if (window.scrollY >= section.offsetTop - 120) current = section.id;
       });
       navAnchors.forEach(a => {
         a.classList.toggle('active', a.getAttribute('href') === '#' + current);
+      });
+    }
+    window.addEventListener('scroll', updateNav, { passive: true });
+    updateNav();
+    navToggle.addEventListener('click', () => {
+      const isOpen = navLinks.classList.toggle('open');
+      navToggle.setAttribute('aria-expanded', String(isOpen));
+    });
+    document.querySelectorAll('a[href^="#"]').forEach(link => {
+      link.addEventListener('click', e => {
+        const href = link.getAttribute('href');
+        if (!href || href === '#') return;
+        const target = document.querySelector(href);
+        if (target) {
+          e.preventDefault();
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          navLinks.classList.remove('open');
+          navToggle.setAttribute('aria-expanded', 'false');
+        }
       });
     });
     const phrases = [
@@ -581,11 +583,13 @@
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           entry.target.classList.add('visible');
-          const counter = entry.target.querySelector('.stat-num');
-          if (counter && !counter.dataset.done) {
-            counter.dataset.done = '1';
-            animateCount(counter);
-          }
+          const counters = entry.target.querySelectorAll('.stat-num');
+          counters.forEach(counter => {
+            if (!counter.dataset.done) {
+              counter.dataset.done = '1';
+              animateCount(counter);
+            }
+          });
           revealObserver.unobserve(entry.target);
         }
       });
